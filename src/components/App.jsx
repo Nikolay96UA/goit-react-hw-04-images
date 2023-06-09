@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import Serchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
 import ImageGalleryItem from './ImageGalleryItem/ImageGalleryItem';
@@ -8,30 +8,24 @@ import { Oval } from 'react-loader-spinner';
 import LoadMore from 'components/Button/Button';
 import { getImages } from './APIService/APIService';
 
-export default class App extends React.Component {
-  state = {
-    searchQuery: '',
-    images: null,
-    error: null,
-    currentPage: 1,
-    showPages: false,
-    showModal: false,
-    selectedImage: '',
-    isLoading: false,
-  };
+export default function App() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [images, setImages] = useState(null);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showPages, setShowPages] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  componentDidUpdate(_, prevState) {
-    if (
-      prevState.searchQuery !== this.state.searchQuery ||
-      prevState.currentPage !== this.state.currentPage
-    ) {
-      this.fetchImages();
+  useEffect(() => {
+    if (searchQuery !== '' || currentPage !== 1) {
+      fetchImages();
     }
-  }
+  }, [searchQuery, currentPage]);
 
-  fetchImages = async () => {
-    const { currentPage, searchQuery } = this.state;
-    this.setState({ isLoading: true });
+  const fetchImages = async () => {
+    setIsLoading(true);
 
     try {
       const data = await getImages({ searchQuery, currentPage });
@@ -41,76 +35,58 @@ export default class App extends React.Component {
       }
 
       if (data.hits.length > 0) {
-        this.setState(prevState => ({
-          images: [...prevState.images, ...data.hits],
-          showPages: this.state.currentPage < Math.ceil(data.totalHits / 12 )
-        }));
+        setImages(prevImages => [...prevImages, ...data.hits]);
+        setShowPages(currentPage < Math.ceil(data.totalHits / 12));
       } else {
-        this.setState({ isLoading: false, error: 'No images found' });
+        setIsLoading(false);
+        setError('No images found');
       }
     } catch (error) {
-      this.setState({ error: error.message });
+      setError(error.message);
     } finally {
-      this.setState({ isLoading: false });
+      setIsLoading(false);
     }
   };
 
-  handleImageClick = image => {
-    this.setState({ showModal: true, selectedImage: image.largeImageURL });
+  const handleImageClick = image => {
+    setShowModal(true);
+    setSelectedImage(image.largeImageURL);
   };
 
-  handleCloseModal = () => {
-    this.setState({ showModal: false, selectedImage: '' });
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedImage('');
   };
 
-  handelOnSubmit = searchQuery => {
-    this.setState({ searchQuery });
-    this.setState({
-      images: [],
-      currentPage: 1,
-      error: null,
-    });
+  const handelOnSubmit = searchQuery => {
+    setSearchQuery(searchQuery);
+    setImages([]);
+    setCurrentPage(1);
+    setError(null);
   };
 
-  handleLoadMore = () => {
-    this.setState(
-      prevState => ({ currentPage: prevState.currentPage + 1 })
-      // // () => {
-      // //   this.fetchImages();
-      // }
-    );
+  const handleLoadMore = () => {
+    setCurrentPage(prevCurrentPage => prevCurrentPage + 1);
   };
 
-  render() {
-    const { images, isLoading, error,showPages } = this.state;
-
-    return (
-      <>
-        <Serchbar onSubmit={this.handelOnSubmit} />
-        <div>
-          <ImageGallery>
-            <ImageGalleryItem
-              images={this.state.images}
-              hendleModal={this.handleImageClick}
-            />
-          </ImageGallery>
+  return (
+    <>
+      <Serchbar onSubmit={handelOnSubmit} />
+      <div>
+        <ImageGallery>
+          <ImageGalleryItem images={images} hendleModal={handleImageClick} />
+        </ImageGallery>
+      </div>
+      {isLoading && (
+        <div className={css.LoaderContainer}>
+          <Oval color="#00BFFF" height={80} width={80} />
         </div>
-        {isLoading && (
-          <div className={css.LoaderContainer}>
-            <Oval color="#00BFFF" height={80} width={80} />
-          </div>
-        )}
-        {error && <div className={css.ErrorContainer}>{error}</div>}
-        {showPages && !isLoading && !error && images && (
-          <LoadMore onClick={this.handleLoadMore} />
-        )}
-        {this.state.showModal && (
-          <Modal
-            image={this.state.selectedImage}
-            onClose={this.handleCloseModal}
-          />
-        )}
-      </>
-    );
-  }
+      )}
+      {error && <div className={css.ErrorContainer}>{error}</div>}
+      {showPages && !isLoading && !error && images && (
+        <LoadMore onClick={handleLoadMore} />
+      )}
+      {showModal && <Modal image={selectedImage} onClose={handleCloseModal} />}
+    </>
+  );
 }
