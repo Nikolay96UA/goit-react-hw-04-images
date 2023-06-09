@@ -19,34 +19,34 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    const fetchImages = async () => {
+      setIsLoading(true);
+  
+      try {
+        const data = await getImages({ searchQuery, currentPage });
+  
+        if (!data.hits) {
+          throw new Error('No matches found');
+        }
+  
+        if (data.hits.length > 0) {
+          setImages(prevImages => [...prevImages, ...data.hits]);
+          setShowPages(currentPage < Math.ceil(data.totalHits / 12));
+        } else {
+          setIsLoading(false);
+          setError('No images found');
+        }
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
     if (searchQuery !== '' || currentPage !== 1) {
       fetchImages();
     }
   }, [searchQuery, currentPage]);
-
-  const fetchImages = async () => {
-    setIsLoading(true);
-
-    try {
-      const data = await getImages({ searchQuery, currentPage });
-
-      if (!data.hits) {
-        throw new Error('No matches found');
-      }
-
-      if (data.hits.length > 0) {
-        setImages(prevImages => [...prevImages, ...data.hits]);
-        setShowPages(currentPage < Math.ceil(data.totalHits / 12));
-      } else {
-        setIsLoading(false);
-        setError('No images found');
-      }
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleImageClick = image => {
     setShowModal(true);
