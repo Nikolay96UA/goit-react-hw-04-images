@@ -22,7 +22,7 @@ export default function App() {
     if (searchQuery !== '' || currentPage !== 1) {
       fetchImages();
     }
-  }, [searchQuery, currentPage, fetchImages]);
+  }, [searchQuery, currentPage]);
 
   const fetchImages = async () => {
     setIsLoading(true);
