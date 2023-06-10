@@ -19,16 +19,20 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    if (!searchQuery) {
+      return;
+    }
+
     const fetchImages = async () => {
       setIsLoading(true);
-  
+
       try {
         const data = await getImages({ searchQuery, currentPage });
-  
+
         if (!data.hits) {
           throw new Error('No matches found');
         }
-  
+
         if (data.hits.length > 0) {
           setImages(prevImages => [...prevImages, ...data.hits]);
           setShowPages(currentPage < Math.ceil(data.totalHits / 12));
@@ -42,10 +46,8 @@ export default function App() {
         setIsLoading(false);
       }
     };
-  
-    if (searchQuery !== '' || currentPage !== 1) {
-      fetchImages();
-    }
+
+    fetchImages();
   }, [searchQuery, currentPage]);
 
   const handleImageClick = image => {

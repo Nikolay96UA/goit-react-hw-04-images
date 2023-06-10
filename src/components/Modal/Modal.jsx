@@ -4,19 +4,19 @@ import { useEffect } from 'react';
 
 export default function Modal({ onClose, image }) {
   useEffect(() => {
+    const handleKeyDown = event => {
+      if (event.code === 'Escape') {
+        onClose();
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  });
+  }, [onClose]);
 
-  const handleKeyDown = event => {
-    if (event.code === 'Escape') {
-      onClose();
-    }
-    console.log(event.code);
-  };
 
   const handleOverlayClick = event => {
     if (event.target === event.currentTarget) {
